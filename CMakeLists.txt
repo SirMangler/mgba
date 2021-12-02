@@ -716,12 +716,14 @@ if(USE_SQLITE3)
 endif()
 
 if(USE_ELF)
-	list(APPEND FEATURES ELF)
 	include_directories(AFTER ${LIBELF_INCLUDE_DIRS})
 	link_directories(${LIBELF_LIBRARY_DIRS})
 	list(APPEND DEPENDENCY_LIB ${LIBELF_LIBRARIES})
 	set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS},libelf1")
+	add_compile_definitions(USE_ELF)
 endif()
+
+
 
 if (USE_DISCORD_RPC)
 	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/third-party/discord-rpc discord-rpc EXCLUDE_FROM_ALL)

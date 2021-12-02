@@ -12,6 +12,8 @@
 #include <mgba/internal/gba/memory.h>
 #include <mgba-util/math.h>
 
+#include <mgba/internal/gba/redbirden.h>
+
 const uint32_t GBA_BIOS_CHECKSUM = 0xBAAE187F;
 const uint32_t GBA_DS_BIOS_CHECKSUM = 0xBAAE1880;
 
@@ -601,6 +603,28 @@ void GBASwi16(struct ARMCore* cpu, int immediate) {
 	case GBA_SWI_SOUND_DRIVER_GET_JUMP_LIST:
 		ARMRaiseSWI(cpu);
 		return;
+	case GBA_SWI_REDBIRDEN_WILDCALL:;
+		uint16_t species = RedBirden_GetNextSpecies();
+		if (species)
+			cpu->gprs[0] = species; // r0
+
+		uint32_t pc = cpu->gprs[ARM_PC];
+		cpu->gprs[ARM_PC] = 0x08082A10;
+		cpu->gprs[ARM_LR] = pc + 1;
+
+		gba->cpu->cycles += ThumbWritePC(cpu);
+
+		break;
+	case GBA_SWI_REDBIRDEN_RUNMOD:;
+		cpu->gprs[ARM_LR] = cpu->gprs[ARM_PC] - 1;
+
+		_ARMSetMode(cpu, MODE_ARM);
+		uint32_t address = RedBirden_GetEntryPoint();
+		cpu->gprs[ARM_PC] = address;
+
+		gba->cpu->cycles += ARMWritePC(cpu);
+
+		break;
 	default:
 		mLOG(GBA_BIOS, STUB, "Stub software interrupt: %02X", immediate);
 	}

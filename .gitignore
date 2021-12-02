@@ -6,6 +6,8 @@
 /build
 /build-*
 /.vs
+/out
+/src/third-party
 
 *.a
 *.dylib

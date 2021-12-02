@@ -13,6 +13,7 @@
 #include <mgba/internal/debugger/parser.h>
 #include <mgba-util/string.h>
 #include <mgba-util/vfs.h>
+#include <mgba/internal/gba/redbirden.h>
 
 #ifdef ENABLE_SCRIPTING
 #include <mgba/core/scripting.h>
@@ -77,6 +78,10 @@ static void _setStackTraceMode(struct CLIDebugger*, struct CLIDebugVector*);
 static void _setSymbol(struct CLIDebugger*, struct CLIDebugVector*);
 static void _findSymbol(struct CLIDebugger*, struct CLIDebugVector*);
 
+static void _RedBirden_Bike(struct CLIDebugger*, struct CLIDebugVector*);
+static void _RedBirden_Wild(struct CLIDebugger*, struct CLIDebugVector*);
+static void _RedBirden_Status(struct CLIDebugger*, struct CLIDebugVector*);
+
 static struct CLIDebuggerCommandSummary _debuggerCommands[] = {
 	{ "backtrace", _backtrace, "i", "Print backtrace of all or specified frames" },
 	{ "break", _setBreakpoint, "Is", "Set a breakpoint" },
@@ -113,6 +118,9 @@ static struct CLIDebuggerCommandSummary _debuggerCommands[] = {
 	{ "x/1", _dumpByte, "Ii", "Examine bytes at a specified offset" },
 	{ "x/2", _dumpHalfword, "Ii", "Examine halfwords at a specified offset" },
 	{ "x/4", _dumpWord, "Ii", "Examine words at a specified offset" },
+	{ "bike", _RedBirden_Bike, "I", "Toggle bike mode" },
+	{ "wild", _RedBirden_Wild, "Is", "Set next wild spawn." },
+	{ "statusall", _RedBirden_Status, "i", "Set a status on the player's team." },
 #ifdef ENABLE_SCRIPTING
 	{ "source", _source, "S", "Load a script" },
 #endif
@@ -1309,4 +1317,65 @@ static void _findSymbol(struct CLIDebugger* debugger, struct CLIDebugVector* dv)
 	} else {
 		debugger->backend->printf(debugger->backend, "Not found.\n");
 	}
+}
+
+static void _RedBirden_Bike(struct CLIDebugger* debugger, struct CLIDebugVector* dv) {
+	if (!dv) {
+		debugger->backend->printf(debugger->backend, "%s\n", ERROR_MISSING_ARGS);
+		return;
+	}
+
+	if (dv->type != CLIDV_INT_TYPE) {
+		debugger->backend->printf(debugger->backend, "%s\n", ERROR_INVALID_ARGS);
+		return;
+	}
+
+	if (dv->intValue == 1) {
+		RedBirden_StartRiding();
+	} else {
+		RedBirden_StartWalking();
+	}
+}
+
+static void _RedBirden_Status(struct CLIDebugger* debugger, struct CLIDebugVector* dv) {
+	if (!dv) {
+		debugger->backend->printf(debugger->backend, "%s\n", ERROR_MISSING_ARGS);
+		return;
+	}
+
+	if (dv->type != CLIDV_INT_TYPE) {
+		debugger->backend->printf(debugger->backend, "%s\n", ERROR_INVALID_ARGS);
+		return;
+	}
+
+	RedBirden_StatusAll(dv->intValue);
+}
+
+static void _RedBirden_Wild(struct CLIDebugger* debugger, struct CLIDebugVector* dv) {
+	if (!dv) {
+		debugger->backend->printf(debugger->backend, "%s\n", ERROR_MISSING_ARGS);
+		return;
+	}
+
+	if (dv->type != CLIDV_INT_TYPE) {
+		debugger->backend->printf(debugger->backend, "%s\n", ERROR_INVALID_ARGS);
+		return;
+	}
+
+	uint32_t value = dv->intValue;
+	uint8_t name[10] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+
+	if (dv->next && dv->next->type == CLIDV_CHAR_TYPE) {
+		for (int i = 0; i < 10; i++) {
+			if (dv->next->charValue[i] == '\0') {
+				name[i] = 0xFF;
+				break;
+			}
+
+			name[i] = (uint8_t) dv->next->charValue[i];
+		}
+	}
+
+	debugger->backend->printf(debugger->backend, "Queuing wild: %x (Name: %s)\n", value, name);
+	RedBirden_QueueWild(value, name);
 }

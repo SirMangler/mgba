@@ -33,7 +33,8 @@ set(SOURCE_FILES
 	sio/gbp.c
 	sio/joybus.c
 	timer.c
-	video.c)
+	video.c
+	redbirden.cpp)
 
 set(SIO_FILES
 	sio/dolphin.c

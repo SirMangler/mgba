@@ -13,6 +13,7 @@
 #include <mgba/internal/gba/cheats.h>
 #include <mgba/internal/gba/io.h>
 #include <mgba/internal/gba/overrides.h>
+#include <mgba/internal/gba/redbirden.h>
 
 #include <mgba-util/patch.h>
 #include <mgba-util/crc32.h>
@@ -852,6 +853,9 @@ void GBAFrameEnded(struct GBA* gba) {
 				mCheatRefresh(device, &cheats->d);
 			}
 		}
+
+		/* Redbirden */
+		RedBirden_RunMods(device->p);
 	}
 
 	if (gba->stream && gba->stream->postVideoFrame) {
